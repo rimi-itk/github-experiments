@@ -4,9 +4,13 @@ on:
       - '*.*.*'
 
 name: Create Release
+
+# @see https://github.com/ncipollo/release-action
 jobs:
   create-release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     env:
       REPO_NAME: ${{ github.event.repository.name }}
     strategy:
@@ -16,24 +20,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+      # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-environment-variable
       - name: Get the tag/version
         run: |
           echo "GIT_TAG=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
 
       - name: Make build dir
         run: |
-          mkdir -p ../build
+          mkdir -p build
 
       - name: Create artifacts
         run: |
-          echo "Version: $GIT_TAG" > ../build/content.txt
-
-      - name: Create artifacts
-        run: |
-          echo "# Version $GIT_TAG" > body.md
+          echo "Version: $GIT_TAG" > build/content.txt
 
       - name: Create checksum
-        run: sha256sum ../build/content.txt > ../build/checksum.txt
+        run: sha256sum build/content.txt > build/checksum.txt
+
+      - name: Create relaase body
+        run: |
+          echo "# Version $GIT_TAG" > body.md
 
       - name: Create Release
         id: create_release
@@ -41,7 +46,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          artifacts: "../build/*.txt"
+          artifacts: "build/*.txt"
           bodyFile: "body.md"
 
       # - name: Upload archive
