@@ -1,0 +1,85 @@
+on:
+  pull_request:
+  workflow_dispatch:
+
+# https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/store-information-in-variables#defining-environment-variables-for-a-single-workflow
+# (cf. services.phpfpm.user in ../../docker-compose.override.yml)
+# env:
+#   COMPOSE_USER: runner
+
+jobs:
+  test-default:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      -
+        run: |
+          id
+
+      -
+        run: |
+          docker compose run --rm phpfpm id
+          docker compose run --rm phpfpm composer install --no-dev
+          ls -l
+          find vendor/ -ls
+          rm -fr vendor/
+
+      # - name: Setup tmate session
+      #   uses: mxschmitt/action-tmate@v3
+      #   with:
+      #     limit-access-to-actor: false
+
+  test-npm-default:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      -
+        run: |
+          id
+
+      -
+        run: |
+          docker compose run --rm node npm install
+          ls -l
+          find node_modules/ -ls
+          rm -fr node_modules/
+
+  test-root:
+    runs-on: ubuntu-latest
+    env:
+      COMPOSE_USER: root
+    steps:
+      - uses: actions/checkout@v4
+
+      -
+        run: |
+          id
+
+      -
+        run: |
+          docker compose run --rm phpfpm id
+          docker compose run --rm phpfpm composer install --no-dev
+          ls -l
+          find vendor/ -ls
+          rm -fr vendor/
+
+  test-runner:
+    runs-on: ubuntu-latest
+    env:
+      COMPOSE_USER: runner
+    steps:
+      - uses: actions/checkout@v4
+
+      -
+        run: |
+          id
+
+      -
+        run: |
+          docker compose run --rm phpfpm id
+          docker compose run --rm phpfpm composer install --no-dev
+          ls -l
+          find vendor/ -ls
+          rm -fr vendor/

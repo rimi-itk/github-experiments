@@ -1,0 +1,84 @@
+on:
+  push:
+    branches:
+      - develop
+
+name: Create develop release
+
+# @see https://github.com/ncipollo/release-action
+jobs:
+  # create-release:
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     contents: write
+  #   env:
+  #     REPO_NAME: ${{ github.event.repository.name }}
+  #   strategy:
+  #     fail-fast: true
+  #   name: Create Release
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+
+  #     - name: Create release body
+  #       # https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
+  #       run: |
+  #         echo "# Version ${{ github.ref }}-${{ github.sha }}" > body.md
+
+  #     # https://docs.github.com/en/actions/using-workflows/storing-workflow-data-as-artifacts
+  #     - name: Archive production artifacts
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: release
+  #         path: |
+  #           body.md
+
+
+  # https://medium.com/@matheus.jk.weber/pre-release-and-release-with-github-actions-2bfba2852af5
+  # https://josh-ops.com/posts/github-apps/
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.PRIVATE_KEY }}
+          # optional: owner not needed IF the app has access to the repo running the workflow
+          #   if you get 'RequestError [HttpError]: Not Found 404', pass in owner
+          owner: ${{ github.repository_owner }}
+
+      # example 1a - cloning repo - clone using the `actions/checkout` step
+      - name: Checkout
+        uses: actions/checkout@v4
+        # with:
+        #   repository: my-org/my-repo-2
+        #   token: ${{ steps.app-token.outputs.token }}
+        #   path: my-repo
+
+      # # example 2b - api - call an api using the GitHub CLI
+      # - name: Get Repo (gh api)
+      #   env:
+      #     GH_TOKEN: ${{ steps.app-token.outputs.token }}
+      #   run: |
+      #     gh api /users/rimi-itk/repos
+
+      #
+      # # https://stackoverflow.com/a/77882553/2502647
+      - name: Build and create release
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          name=github-experiments
+          mkdir -p $name
+          echo date >> $name/README.md
+          tar cvf $name-develop-${{ github.sha }}.tar.gz $name/
+          # https://stackoverflow.com/questions/77882485/github-actions-resource-not-accessible-by-integration
+          # https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/making-authenticated-api-requests-with-a-github-app-in-a-github-actions-workflow
+          # https://github.com/settings/profile
+          # https://github.com/settings/apps
+          #
+          # Delete release if it already exists.
+          gh release view release-develop 2>&1 > /dev/null && gh release delete release-develop --yes
+          gh release create --prerelease --generate-notes release-develop $name-develop-${{ github.sha }}.tar.gz
+        shell: bash
