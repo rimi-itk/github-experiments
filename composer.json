@@ -1,0 +1,25 @@
+{
+    "name": "rimi/github-experiments",
+    "description": "GitHub experiments",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Mikkel Ricky",
+            "email": "rimi@aarhus.dk"
+        }
+    ],
+    "require-dev": {
+        "ergebnis/composer-normalize": "^2.45",
+        "vincentlanglet/twig-cs-fixer": "^3.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Rimi\\GithubExperiments\\": "src/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "ergebnis/composer-normalize": true
+        }
+    }
+}
